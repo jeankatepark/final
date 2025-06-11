@@ -225,6 +225,7 @@ with model:
     trace = pm.sample(1000, tune=1000, target_accept=0.9, random_seed=42)
     summary = az.summary(trace, var_names=["mean_d_prime", "mean_criterion", "stdev_d_prime", "stdev_criterion"])
     print(summary)
+    #Plot Posteriors
     az.plot_posterior(trace)
     plt.tight_layout()
 plt.savefig(OUTPUT_DIR / f'posterior.png')
@@ -337,4 +338,12 @@ def draw_delta_plots(data_delta, pnum):
     # Save the figure
     plt.savefig(OUTPUT_DIR / f'delta_plots_{pnum}.png')
 
+#Sample Delta Plot
 draw_delta_plots(data_delta, pnum =1)
+
+#Compare Stimulus Type and Trial Difficulty Effect
+'''
+Based on the converging SDT model and the delta plots, I infer that the trial difficulty has more effect on the participant's performance 
+than the stimulus type. The delta plots show more variation in participant reaction time when there are different trial difficulties and 
+same stimulus type.
+'''
