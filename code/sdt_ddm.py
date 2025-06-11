@@ -18,6 +18,10 @@ MAPPINGS = {
     'signal': {'present': 0, 'absent': 1}
 }
 
+# Create output directory
+OUTPUT_DIR = Path(__file__).parent / "output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # Descriptive names for each experimental condition
 CONDITION_NAMES = {
     0: 'Easy Simple',
@@ -163,9 +167,11 @@ def read_data(file_path, prepare_for='sdt', display=False):
 
     return data
 
+#Get Data for SDT and Delta Plots
 data_sdt = read_data(file_path, prepare_for='sdt', display=True)
 data_delta = read_data(file_path, prepare_for='delta plots', display=True)
 
+#SDT Model
 def apply_hierarchical_sdt_model(data_sdt):
     """Apply a hierarchical Signal Detection Theory model using PyMC.
     
@@ -214,8 +220,22 @@ def apply_hierarchical_sdt_model(data_sdt):
     
     return sdt_model
 
-apply_hierarchical_sdt_model(data_sdt)
+model = apply_hierarchical_sdt_model(data_sdt)
+with model:
+    trace = pm.sample(1000, tune=1000, target_accept=0.9, random_seed=42)
+    summary = az.summary(trace, var_names=["mean_d_prime", "mean_criterion", "stdev_d_prime", "stdev_criterion"])
+    print(summary)
+    az.plot_posterior(trace)
+    plt.tight_layout()
+plt.savefig(OUTPUT_DIR / f'posterior.png')
 
+#Convergence
+'''
+Model converges, since r hat equals 1.
+'''
+
+
+#Delta Plots
 def draw_delta_plots(data_delta, pnum):
     """Draw delta plots comparing RT distributions between condition pairs.
     
@@ -239,7 +259,7 @@ def draw_delta_plots(data_delta, pnum):
                             figsize=(4*n_conditions, 4*n_conditions))
     
     # Create output directory
-    OUTPUT_DIR = Path(__file__).parent.parent.parent / 'output'
+    OUTPUT_DIR = Path(__file__).parent / "output"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     # Define marker style for plots
@@ -313,12 +333,8 @@ def draw_delta_plots(data_delta, pnum):
                           ha='center', va='top', fontsize=12)
             
             plt.tight_layout()
-            
+    
     # Save the figure
     plt.savefig(OUTPUT_DIR / f'delta_plots_{pnum}.png')
 
-# Main execution
-if __name__ == "__main__":
-    file_to_print = Path(__file__).parent / 'README.md'
-    with open(file_to_print, 'r') as file:
-        print(file.read())
+draw_delta_plots(data_delta, pnum =1)
